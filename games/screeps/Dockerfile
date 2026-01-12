@@ -5,6 +5,7 @@ LABEL author="TuEye"
 ENV   DEBIAN_FRONTEND=noninteractive
 
 ## add container user
+USER  root
 RUN   useradd -m -d /home/container -s /bin/bash container
 
 RUN         dpkg --add-architecture i386 \
