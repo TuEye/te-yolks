@@ -8,11 +8,6 @@ ENV   DEBIAN_FRONTEND=noninteractive
 USER  root
 RUN   useradd -m -d /home/container -s /bin/bash container
 
-RUN         dpkg --add-architecture i386 \
-            && apt update \
-            && apt upgrade -y \
-            && apt install -y ca-certificates tini
-
 USER        container
 ENV         USER=container HOME=/home/container
 WORKDIR     /home/container
