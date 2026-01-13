@@ -1,4 +1,4 @@
-FROM  --platform=$TARGETOS/$TARGETARCH debian:buster
+FROM  --platform=$TARGETOS/$TARGETARCH node:12-buster-slim
 
 LABEL author="TuEye"
 
@@ -15,35 +15,28 @@ RUN			dpkg --add-architecture i386 \
         && apt-get update \
         && apt-get upgrade -y \
         && apt install -y \
-            curl \
-            jq \
-            build-essential \
-            make \
-            libssl-dev \
-            zlib1g-dev \
-            libbz2-dev \
-            libreadline-dev \
-            libsqlite3-dev \
+            ffmpeg \
+            iproute2 \
             git \
-            libncursesw5-dev \
-            xz-utils \
-            tk-dev \
-            libxml2-dev \
-            libxmlsec1-dev \
-            libffi-dev \
-            liblzma-dev \
+            sqlite3 \
+            libsqlite3-dev \
+            ca-certificates \
+            dnsutils \
+            tzdata \
+            zip \
+            tar \
+            curl \
+            build-essential \
+            libtool \
+            iputils-ping \
+            libnss3 \
             tini
-            
+
+RUN         npm install --global npm@latest typescript ts-node @types/node
+
 USER        container
 ENV         USER=container HOME=/home/container
 WORKDIR     /home/container
-
-## Install Python
-ENV PYENV_ROOT="/home/container/.pyenv"
-ENV PATH="${PYENV_ROOT}/bin:${PYENV_ROOT}/shims:${PATH}"
-RUN   curl -fsSL https://pyenv.run | bash \
-      && pyenv install 2.7.18 \
-      && pyenv global 2.7.18
 
 STOPSIGNAL SIGINT
 
