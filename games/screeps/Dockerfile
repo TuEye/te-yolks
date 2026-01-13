@@ -32,8 +32,6 @@ RUN			dpkg --add-architecture i386 \
             libnss3 \
             tini
 
-RUN         npm install --global npm@latest typescript ts-node @types/node
-
 USER        container
 ENV         USER=container HOME=/home/container
 WORKDIR     /home/container
