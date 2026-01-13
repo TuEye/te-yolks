@@ -40,7 +40,6 @@ RUN   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh |
       && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" \
       && nvm install 12 \
       && nvm use 12
-      && nvm use 12
       
 ## Install Python
 ENV PYENV_ROOT="/root/.pyenv"
