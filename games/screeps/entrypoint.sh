@@ -8,6 +8,9 @@ INTERNAL_IP=$(ip route get 1 | awk '{print $(NF-2);exit}')
 export INTERNAL_IP
 
 # ---- Local Redis + MongoDB (same container) ----
+: "${SCREEPS_SERVER_CMD:=npx screeps start}"
+: "${CLI_HOST:=127.0.0.1}"
+: "${CLI_PORT:=21026}"
 : "${START_LOCAL_REDIS:=0}"
 : "${START_LOCAL_MONGO:=0}"
 
@@ -80,6 +83,20 @@ fi
 # Replace Startup Variables
 MODIFIED_STARTUP=$(echo -e ${STARTUP} | sed -e 's/{{/${/g' -e 's/}}/}/g')
 echo -e ":/home/container$ ${MODIFIED_STARTUP}"
+
+# If CLI Startup, start Server in Background
+if echo "${MODIFIED_STARTUP}" | grep -Eq '(^|[[:space:]])screeps([[:space:]].*)?[[:space:]]cli([[:space:]]|$)'; then
+  echo "[init] Detected CLI startup. Pre-starting Screeps server in background: ${SCREEPS_SERVER_CMD}"
+  bash -lc "${SCREEPS_SERVER_CMD}" &
+  SCREEPS_PID=$!
+
+  echo "[init] Waiting for CLI on ${CLI_HOST}:${CLI_PORT} ..."
+  if ! wait_for_tcp "${CLI_HOST}" "${CLI_PORT}" 120; then
+    echo "[init] ERROR: CLI port not reachable. Killing server process ${SCREEPS_PID}."
+    kill "${SCREEPS_PID}" 2>/dev/null || true
+    exit 1
+  fi
+fi
 
 # Run the Server (becomes PID 1; tini handles signal forwarding/reaping)
 exec bash -lc "${MODIFIED_STARTUP}"
