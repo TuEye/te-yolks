@@ -45,13 +45,6 @@ RUN   curl -fsSL https://pyenv.run | bash \
       && pyenv install 2.7.18 \
       && pyenv global 2.7.18
 
-## Install NVM
-ENV NVM_DIR="/home/container/.nvm"
-RUN   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash \
-      && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" \
-      && nvm install 12 \
-      && nvm use 12
-
 STOPSIGNAL SIGINT
 
 COPY        --chown=container:container ./entrypoint.sh /entrypoint.sh
