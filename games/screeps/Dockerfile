@@ -35,17 +35,16 @@ RUN			dpkg --add-architecture i386 \
             tini
             
 ## Install NVM
+ENV NVM_DIR="/root/.nvm"
 RUN   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash \
-      && export NVM_DIR="$HOME/.nvm" \
-      && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" \
       && nvm install 12 \
       && nvm use 12
       
 ## Install Python
+ENV PYENV_ROOT="/root/.pyenv"
+ENV PATH="${PYENV_ROOT}/bin:${PYENV_ROOT}/shims:${PATH}"
+
 RUN   curl -fsSL https://pyenv.run | bash \
-      && export PYENV_ROOT="$HOME/.pyenv" \
-      && [[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH" \
-      && eval "$(pyenv init - bash)" \
       && pyenv install 2.7.18 \
       && pyenv global 2.7.18
 
