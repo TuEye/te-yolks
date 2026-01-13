@@ -37,7 +37,9 @@ RUN			dpkg --add-architecture i386 \
 ## Install NVM
 ENV NVM_DIR="/root/.nvm"
 RUN   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash \
+      && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" \
       && nvm install 12 \
+      && nvm use 12
       && nvm use 12
       
 ## Install Python
