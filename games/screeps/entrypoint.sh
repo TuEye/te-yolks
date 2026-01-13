@@ -8,8 +8,8 @@ INTERNAL_IP=$(ip route get 1 | awk '{print $(NF-2);exit}')
 export INTERNAL_IP
 
 # ---- Local Redis + MongoDB (same container) ----
-: "${START_LOCAL_REDIS:=1}"
-: "${START_LOCAL_MONGO:=1}"
+: "${START_LOCAL_REDIS:=0}"
+: "${START_LOCAL_MONGO:=0}"
 
 REDIS_DIR="/home/container/data/redis"
 MONGO_DBPATH="/home/container/data/mongo/db"
