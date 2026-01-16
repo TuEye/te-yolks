@@ -51,10 +51,10 @@ RUN dpkg --add-architecture i386 \
         redis-server \
     && rm -rf /var/lib/apt/lists/*
     
-# MongoDB 5 install
-RUN curl -fsSL https://www.mongodb.org/static/pgp/server-5.0.asc  \
-    | gpg -o /usr/share/keyrings/mongodb-server-5.0.gpg --dearmor \
-     && echo "deb [ signed-by=/usr/share/keyrings/mongodb-server-5.0.gpg ] https://repo.mongodb.org/apt/debian bullseye/mongodb-org/5.0 main" \
+# MongoDB install
+RUN curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc  \
+    | gpg -o /usr/share/keyrings/mongodb-server.gpg --dearmor \
+     && echo "deb [ signed-by=/usr/share/keyrings/mongodb-server.gpg ] https://repo.mongodb.org/apt/debian bullseye/mongodb-org/7.0 main" \
         > /etc/apt/sources.list.d/mongodb-org.list \
      && apt-get update \
      && apt-get install -y --no-install-recommends mongodb-org \
