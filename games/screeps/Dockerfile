@@ -1,4 +1,4 @@
-FROM  --platform=$TARGETOS/$TARGETARCH node:12-buster-slim
+FROM  --platform=$TARGETOS/$TARGETARCH debian:12-slim
 
 LABEL author="TuEye"
 
@@ -12,9 +12,9 @@ ENV   NODE_VERSION 12
 
 # Base packages
 RUN dpkg --add-architecture i386 \
-    && echo "deb http://archive.debian.org/debian/ buster main contrib non-free" > /etc/apt/sources.list \
-    && echo "deb http://archive.debian.org/debian/ buster-proposed-updates main contrib non-free" >> /etc/apt/sources.list \
-    && echo "deb http://archive.debian.org/debian-security buster/updates main contrib non-free" >> /etc/apt/sources.list \
+    #&& echo "deb http://archive.debian.org/debian/ buster main contrib non-free" > /etc/apt/sources.list \
+    #&& echo "deb http://archive.debian.org/debian/ buster-proposed-updates main contrib non-free" >> /etc/apt/sources.list \
+    #&& echo "deb http://archive.debian.org/debian-security buster/updates main contrib non-free" >> /etc/apt/sources.list \
     && apt-get update \
     && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends \
@@ -36,6 +36,18 @@ RUN dpkg --add-architecture i386 \
         libnss3 \
         tini \
         #python \
+        make \
+        zlib1g-dev \
+        libbz2-dev \
+        libreadline-dev \
+        libncursesw5-dev \
+        xz-utils \
+        tk-dev \
+        libxml2-dev \
+        libxmlsec1-dev \
+        libffi-dev \
+        liblzma-dev \
+        libssl-dev \
         redis-server \
     && rm -rf /var/lib/apt/lists/*
     
