@@ -7,7 +7,6 @@ USER  root
 RUN   useradd -m -d /home/container -s /bin/bash container
 
 ENV   DEBIAN_FRONTEND=noninteractive
-ENV   NODE_VERSION=12
 ENV   NPM_VERSION=8
 
 # Base packages
@@ -48,7 +47,13 @@ RUN curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc  \
      && rm -rf /var/lib/apt/lists/*
 
 # Node.js Install
-RUN curl -fsSL https://raw.githubusercontent.com/mklement0/n-install/stable/bin/n-install | bash -s $NODE_VERSION -- -y \
+RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource.gpg.key \
+    | gpg -o /usr/share/keyrings/nodesource.gpg --dearmor \
+    && echo "deb [signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_12.x bullseye main" \
+       > /etc/apt/sources.list.d/nodejs.list \
+    && apt-get update \
+    && apt-get install -y nodejs \
+    && rm -rf /var/lib/apt/lists/* \
     && npm -g install npm@$NPM_VERSION
 
 USER        container
