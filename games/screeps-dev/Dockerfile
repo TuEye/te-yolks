@@ -1,4 +1,4 @@
-FROM  --platform=$TARGETOS/$TARGETARCH node:12-bullseye-slim
+FROM  --platform=$TARGETOS/$TARGETARCH debian:bullseye-slim
 
 LABEL author="TuEye"
 
@@ -7,7 +7,6 @@ USER  root
 RUN   useradd -m -d /home/container -s /bin/bash container
 
 ENV   DEBIAN_FRONTEND=noninteractive
-ENV   PYTHON_VERSION=2.7.18
 ENV   NPM_VERSION=8
 
 # Base packages
@@ -35,19 +34,6 @@ RUN dpkg --add-architecture i386 \
         iputils-ping \
         libnss3 \
         tini \
-        #python \
-        make \
-        zlib1g-dev \
-        libbz2-dev \
-        libreadline-dev \
-        libncursesw5-dev \
-        xz-utils \
-        tk-dev \
-        libxml2-dev \
-        libxmlsec1-dev \
-        libffi-dev \
-        liblzma-dev \
-        libssl-dev \
         redis-server \
     && rm -rf /var/lib/apt/lists/*
     
@@ -60,19 +46,9 @@ RUN curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc  \
      && apt-get install -y --no-install-recommends mongodb-org \
      && rm -rf /var/lib/apt/lists/*
 
-# Install Python with pyenv
-#ENV PYENV_ROOT=/opt/.pyenv
-#ENV PATH=$PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH
-
-#RUN set -ex \
-#    && curl -fsSL https://pyenv.run | bash \
-#    && pyenv update \
-#    && pyenv install $PYTHON_VERSION \
-#    && pyenv global $PYTHON_VERSION \
-#    && pyenv rehash
-
-# NPM Update
-RUN npm -g install npm@$NPM_VERSION
+# Node.js Install
+RUN curl -fsSL https://raw.githubusercontent.com/mklement0/n-install/stable/bin/n-install | bash -s 12 \
+    && npm -g install npm@$NPM_VERSION
 
 USER        container
 ENV         USER=container HOME=/home/container
