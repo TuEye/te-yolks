@@ -7,6 +7,8 @@ USER  root
 RUN   useradd -m -d /home/container -s /bin/bash container
 
 ENV   DEBIAN_FRONTEND=noninteractive
+ENV   PYTHON_VERSION 2.7.18
+ENV   NODE_VERSION 12
 
 # Base packages
 RUN dpkg --add-architecture i386 \
@@ -33,10 +35,10 @@ RUN dpkg --add-architecture i386 \
         iputils-ping \
         libnss3 \
         tini \
-        python \
+        #python \
         redis-server \
     && rm -rf /var/lib/apt/lists/*
-
+    
 # MongoDB 4.4 repo + install (Debian 10 / Buster)
 RUN curl -fsSL https://www.mongodb.org/static/pgp/server-4.4.asc \
     | gpg -o /usr/share/keyrings/mongodb-server-4.4.gpg --dearmor \
@@ -49,6 +51,28 @@ RUN curl -fsSL https://www.mongodb.org/static/pgp/server-4.4.asc \
 USER        container
 ENV         USER=container HOME=/home/container
 WORKDIR     /home/container
+
+# Install Python with pyenv
+ENV PYENV_ROOT $HOME/.pyenv
+ENV PATH $PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH
+
+RUN set -ex \
+    && curl -fsSL https://pyenv.run | bash \
+    && pyenv update \
+    && pyenv install $PYTHON_VERSION \
+    && pyenv global $PYTHON_VERSION \
+    && pyenv rehash
+
+# Install Node with nvm
+ENV NVM_DIR $HOME/.nvm
+
+RUN set -ex \
+    && curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash \
+    && source $NVM_DIR/nvm.sh \
+    && nvm install $NODE_VERSION \
+    && nvm alias default $NODE_VERSION \
+    && nvm use default \
+    && nvm install-latest-npm
 
 STOPSIGNAL SIGINT
 
