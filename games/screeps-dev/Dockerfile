@@ -51,6 +51,7 @@ RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource.gpg.key \
     | gpg -o /usr/share/keyrings/nodesource.gpg --dearmor \
     && echo "deb [signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_12.x bookworm main" \
        > /etc/apt/sources.list.d/nodejs.list \
+    && printf '%s\n' 'Package: *' 'Pin: origin deb.nodesource.com' 'Pin-Priority: 1001' > /etc/apt/preferences.d/nodesource \
     && apt-get update \
     && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/* \
