@@ -7,6 +7,7 @@ USER  root
 RUN   useradd -m -d /home/container -s /bin/bash container
 
 ENV   DEBIAN_FRONTEND=noninteractive
+ENV   NODE_VERSION=12
 ENV   NPM_VERSION=8
 
 # Base packages
@@ -47,7 +48,7 @@ RUN curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc  \
      && rm -rf /var/lib/apt/lists/*
 
 # Node.js Install
-RUN curl -fsSL https://raw.githubusercontent.com/mklement0/n-install/stable/bin/n-install | bash -s 12 \
+RUN curl -fsSL https://raw.githubusercontent.com/mklement0/n-install/stable/bin/n-install | bash -s $NODE_VERSION -- -y \
     && npm -g install npm@$NPM_VERSION
 
 USER        container
