@@ -7,8 +7,8 @@ USER  root
 RUN   useradd -m -d /home/container -s /bin/bash container
 
 ENV   DEBIAN_FRONTEND=noninteractive
-ENV   PYTHON_VERSION 2.7.18
-ENV   NODE_VERSION 12
+ENV   PYTHON_VERSION=2.7.18
+ENV   NODE_VERSION=12
 
 # Base packages
 RUN dpkg --add-architecture i386 \
@@ -65,8 +65,8 @@ ENV         USER=container HOME=/home/container
 WORKDIR     /home/container
 
 # Install Python with pyenv
-ENV PYENV_ROOT $HOME/.pyenv
-ENV PATH $PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH
+ENV PYENV_ROOT=$HOME/.pyenv
+ENV PATH=$PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH
 
 RUN set -ex \
     && curl -fsSL https://pyenv.run | bash \
@@ -76,7 +76,8 @@ RUN set -ex \
     && pyenv rehash
 
 # Install Node with nvm
-ENV NVM_DIR $HOME/.nvm
+ENV NVM_DIR=$HOME/.nvm
+ENV PATH=$NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
 
 RUN set -ex \
     && curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash \
