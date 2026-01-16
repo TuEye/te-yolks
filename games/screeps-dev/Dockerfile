@@ -1,4 +1,4 @@
-FROM  --platform=$TARGETOS/$TARGETARCH node:12-buster-slim
+FROM  --platform=$TARGETOS/$TARGETARCH node:12-bullseye-slim
 
 LABEL author="TuEye"
 
@@ -12,9 +12,9 @@ ENV   NPM_VERSION=8
 
 # Base packages
 RUN dpkg --add-architecture i386 \
-    && echo "deb http://archive.debian.org/debian/ buster main contrib non-free" > /etc/apt/sources.list \
-    && echo "deb http://archive.debian.org/debian/ buster-proposed-updates main contrib non-free" >> /etc/apt/sources.list \
-    && echo "deb http://archive.debian.org/debian-security buster/updates main contrib non-free" >> /etc/apt/sources.list \
+    #&& echo "deb http://archive.debian.org/debian/ buster main contrib non-free" > /etc/apt/sources.list \
+    #&& echo "deb http://archive.debian.org/debian/ buster-proposed-updates main contrib non-free" >> /etc/apt/sources.list \
+    #&& echo "deb http://archive.debian.org/debian-security buster/updates main contrib non-free" >> /etc/apt/sources.list \
     && apt-get update \
     && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends \
@@ -51,11 +51,11 @@ RUN dpkg --add-architecture i386 \
         redis-server \
     && rm -rf /var/lib/apt/lists/*
     
-# MongoDB 4.4 repo + install (Debian 10 / Buster)
-RUN curl -fsSL https://www.mongodb.org/static/pgp/server-4.4.asc \
-    | gpg -o /usr/share/keyrings/mongodb-server-4.4.gpg --dearmor \
-     && echo "deb [ signed-by=/usr/share/keyrings/mongodb-server-4.4.gpg ] http://repo.mongodb.org/apt/debian buster/mongodb-org/4.4 main" \
-        > /etc/apt/sources.list.d/mongodb-org-4.4.list \
+# MongoDB 5 install
+RUN curl -fsSL https://www.mongodb.org/static/pgp/server-5.0.asc  \
+    | gpg -o /usr/share/keyrings/mongodb-server-5.0.gpg --dearmor \
+     && echo "deb [ signed-by=/usr/share/keyrings/mongodb-server-5.0.gpg ] https://repo.mongodb.org/apt/debian bullseye/mongodb-org/5.0 main" \
+        > /etc/apt/sources.list.d/mongodb-org.list \
      && apt-get update \
      && apt-get install -y --no-install-recommends mongodb-org \
      && rm -rf /var/lib/apt/lists/*
