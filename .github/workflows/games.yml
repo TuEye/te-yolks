@@ -20,6 +20,7 @@ jobs:
       matrix:
         game:
           - screeps
+          - screeps-dev
           
     steps:
       - uses: actions/checkout@v4
