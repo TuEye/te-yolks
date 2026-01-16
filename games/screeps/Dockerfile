@@ -1,4 +1,4 @@
-FROM  --platform=$TARGETOS/$TARGETARCH debian:10-slim
+FROM  --platform=$TARGETOS/$TARGETARCH node:12-buster-slim
 
 LABEL author="TuEye"
 
@@ -35,7 +35,7 @@ RUN dpkg --add-architecture i386 \
         iputils-ping \
         libnss3 \
         tini \
-        #python \
+        python \
         make \
         zlib1g-dev \
         libbz2-dev \
@@ -64,28 +64,8 @@ USER        container
 ENV         USER=container HOME=/home/container
 WORKDIR     /home/container
 
-# Install Python with pyenv
-ENV PYENV_ROOT=$HOME/.pyenv
-ENV PATH=$PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH
-
-RUN set -ex \
-    && curl -fsSL https://pyenv.run | bash \
-    && pyenv update \
-    && pyenv install $PYTHON_VERSION \
-    && pyenv global $PYTHON_VERSION \
-    && pyenv rehash
-
-# Install Node with nvm
-ENV NVM_DIR=$HOME/.nvm
-ENV PATH=$NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
-
-RUN set -ex \
-    && curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash \
-    && . $NVM_DIR/nvm.sh \
-    && nvm install $NODE_VERSION \
-    && nvm alias default $NODE_VERSION \
-    && nvm use default \
-    && nvm install-latest-npm
+# Update NPM
+RUN npm update -g npm
 
 STOPSIGNAL SIGINT
 
