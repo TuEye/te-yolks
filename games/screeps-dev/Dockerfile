@@ -61,15 +61,15 @@ RUN curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc  \
      && rm -rf /var/lib/apt/lists/*
 
 # Install Python with pyenv
-ENV PYENV_ROOT=/opt/.pyenv
-ENV PATH=$PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH
+#ENV PYENV_ROOT=/opt/.pyenv
+#ENV PATH=$PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH
 
-RUN set -ex \
-    && curl -fsSL https://pyenv.run | bash \
-    && pyenv update \
-    && pyenv install $PYTHON_VERSION \
-    && pyenv global $PYTHON_VERSION \
-    && pyenv rehash
+#RUN set -ex \
+#    && curl -fsSL https://pyenv.run | bash \
+#    && pyenv update \
+#    && pyenv install $PYTHON_VERSION \
+#    && pyenv global $PYTHON_VERSION \
+#    && pyenv rehash
 
 # NPM Update
 RUN npm -g install npm@$NPM_VERSION
