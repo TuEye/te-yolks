@@ -9,6 +9,7 @@ export INTERNAL_IP
 
 # ---- Local Redis + MongoDB (same container) ----
 : "${SCREEPS_SERVER_CMD:=npx screeps start}"
+: "${SCREEPS_LAUNCHER_SERVER_CMD:=screeps-launcher}"
 : "${CLI_HOST:=127.0.0.1}"
 : "${CLI_PORT:=21026}"
 : "${START_LOCAL_REDIS:=0}"
@@ -84,10 +85,21 @@ fi
 MODIFIED_STARTUP=$(echo -e ${STARTUP} | sed -e 's/{{/${/g' -e 's/}}/}/g')
 echo -e ":/home/container$ ${MODIFIED_STARTUP}"
 
-# If CLI Startup, start Server in Background
+# If CLI Startup, start the matching server in background
+PRESTART_CMD=""
+
+# Case 1: npx screeps cli  -> start via SCREEPS_SERVER_CMD (default: npx screeps start)
 if echo "${MODIFIED_STARTUP}" | grep -Eq '(^|[[:space:]])screeps([[:space:]].*)?[[:space:]]cli([[:space:]]|$)'; then
-  echo "[init] Detected CLI startup. Pre-starting Screeps server in background: ${SCREEPS_SERVER_CMD}"
-  bash -lc "${SCREEPS_SERVER_CMD}" &
+  PRESTART_CMD="${SCREEPS_SERVER_CMD}"
+
+# Case 2: screeps-launcher cli -> start via SCREEPS_LAUNCHER_SERVER_CMD (default: screeps-launcher)
+elif echo "${MODIFIED_STARTUP}" | grep -Eq '(^|[[:space:]])screeps-launcher([[:space:]].*)?[[:space:]]cli([[:space:]]|$)'; then
+  PRESTART_CMD="${SCREEPS_LAUNCHER_SERVER_CMD}"
+fi
+
+if [ -n "${PRESTART_CMD}" ]; then
+  echo "[init] Detected CLI startup. Pre-starting server in background: ${PRESTART_CMD}"
+  bash -lc "${PRESTART_CMD}" &
   SCREEPS_PID=$!
 
   echo "[init] Waiting for CLI on ${CLI_HOST}:${CLI_PORT} ..."

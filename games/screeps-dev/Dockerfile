@@ -52,7 +52,7 @@ RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource.gpg.key \
     && echo "deb [signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_12.x bullseye main" \
        > /etc/apt/sources.list.d/nodejs.list \
     && apt-get update \
-    && apt-get install -y nodejs \
+    && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/* \
     && npm -g install npm@$NPM_VERSION
 
