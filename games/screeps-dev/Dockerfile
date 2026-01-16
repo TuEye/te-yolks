@@ -1,4 +1,4 @@
-FROM  --platform=$TARGETOS/$TARGETARCH debian:bullseye-slim
+FROM  --platform=$TARGETOS/$TARGETARCH debian:bookworm-slim
 
 LABEL author="TuEye"
 
@@ -40,7 +40,7 @@ RUN dpkg --add-architecture i386 \
 # MongoDB install
 RUN curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc  \
     | gpg -o /usr/share/keyrings/mongodb-server.gpg --dearmor \
-     && echo "deb [ signed-by=/usr/share/keyrings/mongodb-server.gpg ] https://repo.mongodb.org/apt/debian bullseye/mongodb-org/7.0 main" \
+     && echo "deb [ signed-by=/usr/share/keyrings/mongodb-server.gpg ] https://repo.mongodb.org/apt/debian bookworm/mongodb-org/7.0 main" \
         > /etc/apt/sources.list.d/mongodb-org.list \
      && apt-get update \
      && apt-get install -y --no-install-recommends mongodb-org \
@@ -49,7 +49,7 @@ RUN curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc  \
 # Node.js Install
 RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource.gpg.key \
     | gpg -o /usr/share/keyrings/nodesource.gpg --dearmor \
-    && echo "deb [signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_12.x bullseye main" \
+    && echo "deb [signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_12.x bookworm main" \
        > /etc/apt/sources.list.d/nodejs.list \
     && apt-get update \
     && apt-get install -y --no-install-recommends nodejs \
