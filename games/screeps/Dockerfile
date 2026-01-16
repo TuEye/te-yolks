@@ -54,7 +54,7 @@ RUN dpkg --add-architecture i386 \
 # MongoDB 4.4 repo + install (Debian 10 / Buster)
 RUN curl -fsSL https://www.mongodb.org/static/pgp/server-4.4.asc \
     | gpg -o /usr/share/keyrings/mongodb-server-4.4.gpg --dearmor \
-     && echo "deb [ signed-by=/usr/share/keyrings/mongodb-server-4.4.gpg ] http://repo.mongodb.org/apt/debian buster/mongodb-org/4.4 main" \
+     && echo "deb [ signed-by=/usr/share/keyrings/mongodb-server-4.4.gpg ] http://repo.mongodb.org/apt/debian bookworm/mongodb-org/4.4 main" \
         > /etc/apt/sources.list.d/mongodb-org-4.4.list \
      && apt-get update \
      && apt-get install -y --no-install-recommends mongodb-org \
