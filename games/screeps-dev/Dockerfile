@@ -1,4 +1,4 @@
-FROM  --platform=$TARGETOS/$TARGETARCH debian:bookworm-slim
+FROM  --platform=$TARGETOS/$TARGETARCH debian:12-slim
 
 LABEL author="TuEye"
 
