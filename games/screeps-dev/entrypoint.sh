@@ -9,7 +9,7 @@ export INTERNAL_IP
 
 # ---- Local Redis + MongoDB (same container) ----
 : "${SCREEPS_SERVER_CMD:=npx screeps start}"
-: "${SCREEPS_LAUNCHER_SERVER_CMD:=screeps-launcher}"
+: "${SCREEPS_LAUNCHER_SERVER_CMD:=./screeps-launcher}"
 : "${CLI_HOST:=127.0.0.1}"
 : "${CLI_PORT:=21026}"
 : "${START_LOCAL_REDIS:=0}"
@@ -93,7 +93,7 @@ if echo "${MODIFIED_STARTUP}" | grep -Eq '(^|[[:space:]])screeps([[:space:]].*)?
   PRESTART_CMD="${SCREEPS_SERVER_CMD}"
 
 # Case 2: screeps-launcher cli -> start via SCREEPS_LAUNCHER_SERVER_CMD (default: screeps-launcher)
-elif echo "${MODIFIED_STARTUP}" | grep -Eq '(^|[[:space:]])screeps-launcher([[:space:]].*)?[[:space:]]cli([[:space:]]|$)'; then
+elif echo "${MODIFIED_STARTUP}" | grep -Eq '(^|[[:space:]])./screeps-launcher([[:space:]].*)?[[:space:]]cli([[:space:]]|$)'; then
   PRESTART_CMD="${SCREEPS_LAUNCHER_SERVER_CMD}"
 fi
 
