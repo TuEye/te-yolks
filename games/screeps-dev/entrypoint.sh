@@ -93,8 +93,31 @@ if echo "${MODIFIED_STARTUP}" | grep -Eq '(^|[[:space:]])screeps([[:space:]].*)?
   PRESTART_CMD="${SCREEPS_SERVER_CMD}"
 
 # Case 2: screeps-launcher cli -> start via SCREEPS_LAUNCHER_SERVER_CMD (default: screeps-launcher)
-elif echo "${MODIFIED_STARTUP}" | grep -Eq '(^|[[:space:]])./screeps-launcher([[:space:]].*)?[[:space:]]cli([[:space:]]|$)'; then
+elif echo "${MODIFIED_STARTUP}" | grep -Eq '(^|[[:space:]])\./screeps-launcher-cli\.sh([[:space:]]|$)'; then
   PRESTART_CMD="${SCREEPS_LAUNCHER_SERVER_CMD}"
+  export PYENV_ROOT="${HOME}/.pyenv"
+  export PATH="${PYENV_ROOT}/bin:${PYENV_ROOT}/shims:${PATH}"
+  
+  # reduce peak tmp usage during compilation
+  export MAKE_OPTS="-j1"
+  if [ ! -d "${HOME}/.pyenv" ]; then
+    curl -fsSL https://pyenv.run | bash
+  fi
+  
+  # initialize shims for this script
+  eval "$(pyenv init -)"
+  
+  # Build/install Python 2.7.18 (only if missing)
+  if ! pyenv versions --bare | grep -qx "2.7.18"; then
+    pyenv install 2.7.18
+  fi
+  pyenv global 2.7.18
+  PY2="$(pyenv which python)"
+  echo "Using Python for node-gyp: $(${PY2} -V 2>&1)"
+
+  # Help node-gyp find Python 2
+  export npm_config_python="${PY2}"
+  export PYTHON="${PY2}"
 fi
 
 if [ -n "${PRESTART_CMD}" ]; then
