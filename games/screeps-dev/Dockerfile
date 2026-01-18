@@ -67,7 +67,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 # --- pyenv (system-wide) via the officially supported installer (pyenv.run) ---
 # Ensure PYENV_ROOT is respected; if the installer still used /root/.pyenv, move it.
 RUN set -eux; \
-    mkdir -p "${PYENV_ROOT}"; \
+    rm -rf "${PYENV_ROOT}"; \
     export PYENV_ROOT="${PYENV_ROOT}"; \
     curl -fsSL https://pyenv.run | bash; \
     if [ -d /root/.pyenv ] && [ ! -d "${PYENV_ROOT}/bin" ]; then \
