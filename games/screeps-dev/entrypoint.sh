@@ -113,16 +113,19 @@ elif echo "${MODIFIED_STARTUP}" | grep -Eq '(^|[[:space:]])\./screeps-launcher-c
   fi
   pyenv global 2.7.18
   PY2="$(pyenv which python)"
+  PY2_PREFIX="$(pyenv prefix)"
+  export LD_LIBRARY_PATH="${PY2_PREFIX}/lib:${LD_LIBRARY_PATH:-}"
   echo "Using Python for node-gyp: $(${PY2} -V 2>&1)"
 
   # Help node-gyp find Python 2
   export npm_config_python="${PY2}"
   export PYTHON="${PY2}"
+  export NODE_GYP_FORCE_PYTHON="${PY2}"
 fi
 
 if [ -n "${PRESTART_CMD}" ]; then
   echo "[init] Detected CLI startup. Pre-starting server in background: ${PRESTART_CMD}"
-  bash -lc "${PRESTART_CMD}" &
+  bash -c "${PRESTART_CMD}" &
   SCREEPS_PID=$!
 
   echo "[init] Waiting for CLI on ${CLI_HOST}:${CLI_PORT} ..."
