@@ -7,7 +7,12 @@ cd /home/container
 INTERNAL_IP=$(ip route get 1 | awk '{print $(NF-2);exit}')
 export INTERNAL_IP
 
-# ---- Local Redis + MongoDB (same container) ----
+# Ensure pyenv/python PATH is available even if a runtime orchestrator overrides PATH.
+# Also avoids relying on login-shell behavior that may rewrite PATH.
+export PYENV_ROOT="${PYENV_ROOT:-/opt/pyenv}"
+export PATH="${PYENV_ROOT}/bin:${PYENV_ROOT}/shims:${PATH}"
+
+# ---- Variables and Defaults ----
 : "${SCREEPS_SERVER_CMD:=npx screeps start}"
 : "${SCREEPS_LAUNCHER_SERVER_CMD:=./screeps-launcher}"
 : "${CLI_HOST:=127.0.0.1}"
@@ -15,14 +20,24 @@ export INTERNAL_IP
 : "${START_LOCAL_REDIS:=0}"
 : "${START_LOCAL_MONGO:=0}"
 : "${WAIT_FOR_CLI_TIMEOUT:=300}"
+: "${START_SCREEPS_BACKGROUND:=0}"
+: "${START_SCREEPS_LAUNCHER_BACKGROUND:=0}"
 
 REDIS_DIR="/home/container/data/redis"
 MONGO_DBPATH="/home/container/data/mongo/db"
 MONGO_LOGDIR="/home/container/data/mongo/log"
 
+is_true() {
+  # Accepts: 1/true/yes/on (case-insensitive)
+  case "${1,,}" in
+    1|true|yes|y|on) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
 wait_for_tcp() {
   local host="$1" port="$2" tries="${3:-60}"
-  for i in $(seq 1 "$tries"); do
+  for _ in $(seq 1 "$tries"); do
     if (echo >/dev/tcp/"$host"/"$port") >/dev/null 2>&1; then
       return 0
     fi
@@ -47,8 +62,7 @@ start_redis() {
 
 start_mongo() {
   mkdir -p "${MONGO_DBPATH}" "${MONGO_LOGDIR}"
-  # Mongo kann recht aggressiv RAM nehmen; screepsmod-mongo weist darauf hin. 
-  # Default hier konservativ, bei Bedarf per ENV überschreiben.
+  # Mongo can consume RAM aggressively; keep default conservative.
   : "${MONGO_WT_CACHE_GB:=0.25}"
 
   echo "[init] Starting mongod on 127.0.0.1:27017 (dbpath=${MONGO_DBPATH}) ..."
@@ -63,7 +77,43 @@ start_mongo() {
     ${MONGO_EXTRA_ARGS:-} &
 }
 
-if [ "${START_LOCAL_REDIS}" = "1" ]; then
+ensure_python2() {
+  local py2_bin="/usr/local/bin/python2"
+
+  if [[ ! -x "${py2_bin}" ]]; then
+    local pyenv_root="${PYENV_ROOT:-/opt/pyenv}"
+    local py2_ver="${PYTHON2_VERSION:-2.7.18}"
+    local candidate="${pyenv_root}/versions/${py2_ver}/bin/python"
+    if [[ -x "${candidate}" ]]; then
+      py2_bin="${candidate}"
+    fi
+  fi
+
+  if [[ ! -x "${py2_bin}" ]]; then
+    echo "[init] ERROR: Python 2 interpreter not found. Expected /usr/local/bin/python2 or \$PYENV_ROOT/versions/\$PYTHON2_VERSION/bin/python." >&2
+    return 1
+  fi
+
+  # Help node-gyp find Python 2
+  export npm_config_python="${py2_bin}"
+  export PYTHON="${py2_bin}"
+  export NODE_GYP_FORCE_PYTHON="${py2_bin}"
+
+  echo "[init] Using Python for node-gyp: $(${py2_bin} -V 2>&1) @ ${py2_bin}"
+
+  # Some toolchains expect libpython on the loader path; keep it as a safe fallback.
+  local resolved
+  resolved=$(readlink -f "${py2_bin}" 2>/dev/null || true)
+  if [[ -n "${resolved}" ]]; then
+    local prefix
+    prefix=$(dirname "$(dirname "${resolved}")")
+    if [[ -d "${prefix}/lib" ]]; then
+      export LD_LIBRARY_PATH="${prefix}/lib:${LD_LIBRARY_PATH:-}"
+    fi
+  fi
+}
+
+if is_true "${START_LOCAL_REDIS}"; then
   start_redis
   if ! wait_for_tcp 127.0.0.1 6379 60; then
     echo "[init] ERROR: Redis did not become ready on 127.0.0.1:6379" >&2
@@ -71,7 +121,7 @@ if [ "${START_LOCAL_REDIS}" = "1" ]; then
   fi
 fi
 
-if [ "${START_LOCAL_MONGO}" = "1" ]; then
+if is_true "${START_LOCAL_MONGO}"; then
   if command -v mongod >/dev/null 2>&1; then
     start_mongo
     if ! wait_for_tcp 127.0.0.1 27017 120; then
@@ -84,63 +134,41 @@ if [ "${START_LOCAL_MONGO}" = "1" ]; then
 fi
 
 # Replace Startup Variables
-MODIFIED_STARTUP=$(echo -e ${STARTUP} | sed -e 's/{{/${/g' -e 's/}}/}/g')
-echo -e ":/home/container$ ${MODIFIED_STARTUP}"
+MODIFIED_STARTUP=$(printf '%s' "${STARTUP:-}" | sed -e 's/{{/${/g' -e 's/}}/}/g')
+printf '%s\n' ":/home/container$ ${MODIFIED_STARTUP}"
 
-# If CLI Startup, start the matching server in background
+# Background start (explicit via env vars)
 PRESTART_CMD=""
 
-# Case 1: npx screeps cli  -> start via SCREEPS_SERVER_CMD (default: npx screeps start)
-if echo "${MODIFIED_STARTUP}" | grep -Eq '(^|[[:space:]])screeps([[:space:]].*)?[[:space:]]cli([[:space:]]|$)'; then
+if is_true "${START_SCREEPS_BACKGROUND}" && is_true "${START_SCREEPS_LAUNCHER_BACKGROUND}"; then
+  echo "[init] ERROR: Both START_SCREEPS_BACKGROUND and START_SCREEPS_LAUNCHER_BACKGROUND are enabled; only one can be true." >&2
+  exit 1
+fi
+
+if is_true "${START_SCREEPS_BACKGROUND}"; then
   PRESTART_CMD="${SCREEPS_SERVER_CMD}"
-
-# Case 2: screeps-launcher cli -> start via SCREEPS_LAUNCHER_SERVER_CMD (default: screeps-launcher)
-elif echo "${MODIFIED_STARTUP}" | grep -Eq '(^|[[:space:]])\./screeps-launcher-cli\.sh([[:space:]]|$)'; then
+elif is_true "${START_SCREEPS_LAUNCHER_BACKGROUND}"; then
   PRESTART_CMD="${SCREEPS_LAUNCHER_SERVER_CMD}"
-  export PYENV_ROOT="${HOME}/.pyenv"
-  export PATH="${PYENV_ROOT}/bin:${PYENV_ROOT}/shims:${PATH}"
-  
-  # reduce peak tmp usage during compilation
-  if [ ! -d "${HOME}/.pyenv" ]; then
-    curl -fsSL https://pyenv.run | bash
-  fi
-  
-  # initialize shims for this script
-  eval "$(pyenv init -)"
-  
-  # Build/install Python 2.7.18 (only if missing)
-  if ! pyenv versions --bare | grep -qx "2.7.18"; then
-    pyenv install 2.7.18
-  fi
-  pyenv global 2.7.18
-  PY2="$(pyenv which python)"
-  PY2_PREFIX="$(pyenv prefix)"
-  export LD_LIBRARY_PATH="${PY2_PREFIX}/lib:${LD_LIBRARY_PATH:-}"
-  echo "Using Python for node-gyp: $(${PY2} -V 2>&1)"
 
-  # Help node-gyp find Python 2
-  export npm_config_python="${PY2}"
-  export PYTHON="${PY2}"
-  export NODE_GYP_FORCE_PYTHON="${PY2}"
-  
-  # --- isolated-vm Build-Fix: C++14 + <utility> erzwingen ---
-  # -std=... stellt sicher, dass C++14 aktiv ist
-  # -include utility erzwingt das Einbinden von <utility> auch dann, wenn timer.cc es nicht sauber inkludiert
+  ensure_python2
+
+  # --- isolated-vm Build-Fix: C++14 + <utility> enforce ---
   export CXXFLAGS="${CXXFLAGS:-} -std=gnu++14 -include utility -include limits"
 fi
 
-if [ -n "${PRESTART_CMD}" ]; then
-  echo "[init] Detected CLI startup. Pre-starting server in background: ${PRESTART_CMD}"
+if [[ -n "${PRESTART_CMD}" ]]; then
+  echo "[init] Pre-starting server in background: ${PRESTART_CMD}"
   bash -c "${PRESTART_CMD}" &
   SCREEPS_PID=$!
 
   echo "[init] Waiting for CLI on ${CLI_HOST}:${CLI_PORT} ..."
   if ! wait_for_tcp "${CLI_HOST}" "${CLI_PORT}" "${WAIT_FOR_CLI_TIMEOUT}"; then
-    echo "[init] ERROR: CLI port not reachable. Killing server process ${SCREEPS_PID}."
+    echo "[init] ERROR: CLI port not reachable. Killing server process ${SCREEPS_PID}." >&2
     kill "${SCREEPS_PID}" 2>/dev/null || true
     exit 1
   fi
 fi
 
 # Run the Server (becomes PID 1; tini handles signal forwarding/reaping)
-exec bash -lc "${MODIFIED_STARTUP}"
+# Avoid login shell (-l) to prevent /etc/profile from overwriting PATH and other env.
+exec bash -c "${MODIFIED_STARTUP}"
