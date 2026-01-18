@@ -99,7 +99,6 @@ elif echo "${MODIFIED_STARTUP}" | grep -Eq '(^|[[:space:]])\./screeps-launcher-c
   export PATH="${PYENV_ROOT}/bin:${PYENV_ROOT}/shims:${PATH}"
   
   # reduce peak tmp usage during compilation
-  export MAKE_OPTS="-j1"
   if [ ! -d "${HOME}/.pyenv" ]; then
     curl -fsSL https://pyenv.run | bash
   fi
@@ -121,6 +120,11 @@ elif echo "${MODIFIED_STARTUP}" | grep -Eq '(^|[[:space:]])\./screeps-launcher-c
   export npm_config_python="${PY2}"
   export PYTHON="${PY2}"
   export NODE_GYP_FORCE_PYTHON="${PY2}"
+  
+  # --- isolated-vm Build-Fix: C++14 + <utility> erzwingen ---
+  # -std=... stellt sicher, dass C++14 aktiv ist
+  # -include utility erzwingt das Einbinden von <utility> auch dann, wenn timer.cc es nicht sauber inkludiert
+  export CXXFLAGS="${CXXFLAGS:-} -std=gnu++14 -include utility -include limits"
 fi
 
 if [ -n "${PRESTART_CMD}" ]; then
