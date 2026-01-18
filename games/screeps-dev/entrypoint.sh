@@ -23,6 +23,17 @@ export PATH="${PYENV_ROOT}/bin:${PYENV_ROOT}/shims:${PATH}"
 : "${START_SCREEPS_BACKGROUND:=0}"
 : "${START_SCREEPS_LAUNCHER_BACKGROUND:=0}"
 
+# Allow host/port override from outside
+: "${REDIS_HOST:=127.0.0.1}"
+: "${REDIS_PORT:=6379}"
+: "${MONGO_HOST:=127.0.0.1}"
+: "${MONGO_PORT:=27017}"
+
+# Cleanup flags (default true)
+# Accepts: 1/true/yes/on (case-insensitive)
+: "${CLEANUP_REDIS_LOGS:=1}"
+: "${CLEANUP_MONGODB_LOGS:=1}"
+
 REDIS_DIR="/home/container/data/redis"
 MONGO_DBPATH="/home/container/data/mongo/db"
 MONGO_LOGDIR="/home/container/data/mongo/log"
@@ -48,29 +59,41 @@ wait_for_tcp() {
 
 start_redis() {
   mkdir -p "${REDIS_DIR}"
-  echo "[init] Starting redis-server on 127.0.0.1:6379 ..."
+  
+  local redis_logfile="${REDIS_DIR}/redis.log"
+  if is_true "${CLEANUP_REDIS_LOGS}"; then
+    rm -f "${redis_logfile}" 2>/dev/null || true
+  fi
+  
+  echo "[init] Starting redis-server on ${REDIS_HOST}:${REDIS_PORT} ..."
   redis-server \
-    --bind 127.0.0.1 \
-    --port 6379 \
+    --bind "${REDIS_HOST}" \
+    --port "${REDIS_PORT}" \
     --protected-mode yes \
     --dir "${REDIS_DIR}" \
     --appendonly yes \
-    --logfile "${REDIS_DIR}/redis.log" \
+    --logfile "${redis_logfile}" \
     --pidfile "${REDIS_DIR}/redis-server.pid" \
     ${REDIS_EXTRA_ARGS:-} &
 }
 
 start_mongo() {
   mkdir -p "${MONGO_DBPATH}" "${MONGO_LOGDIR}"
+  
+  local mongo_logfile="${MONGO_LOGDIR}/mongod.log"
+  if is_true "${CLEANUP_MONGODB_LOGS}"; then
+    rm -f "${mongo_logfile}" 2>/dev/null || true
+  fi
+  
   # Mongo can consume RAM aggressively; keep default conservative.
   : "${MONGO_WT_CACHE_GB:=0.25}"
 
-  echo "[init] Starting mongod on 127.0.0.1:27017 (dbpath=${MONGO_DBPATH}) ..."
+  echo "[init] Starting mongod on ${MONGO_HOST}:${MONGO_PORT} (dbpath=${MONGO_DBPATH}) ..."
   mongod \
-    --bind_ip 127.0.0.1 \
-    --port 27017 \
+    --bind_ip "${MONGO_HOST}" \
+    --port "${MONGO_PORT}" \
     --dbpath "${MONGO_DBPATH}" \
-    --logpath "${MONGO_LOGDIR}/mongod.log" \
+    --logpath "${mongo_logfile}" \
     --logappend \
     --pidfilepath "/home/container/data/mongo/mongod.pid" \
     --wiredTigerCacheSizeGB "${MONGO_WT_CACHE_GB}" \
@@ -113,19 +136,33 @@ ensure_python2() {
   fi
 }
 
-if is_true "${START_LOCAL_REDIS}"; then
+if [ "${START_LOCAL_REDIS}" = "1" ]; then
   start_redis
-  if ! wait_for_tcp 127.0.0.1 6379 60; then
-    echo "[init] ERROR: Redis did not become ready on 127.0.0.1:6379" >&2
+
+  # If binding to 0.0.0.0, wait on localhost.
+  _redis_wait_host="${REDIS_HOST}"
+  if [ "${_redis_wait_host}" = "0.0.0.0" ]; then
+    _redis_wait_host="127.0.0.1"
+  fi
+
+  if ! wait_for_tcp "${_redis_wait_host}" "${REDIS_PORT}" 60; then
+    echo "[init] ERROR: Redis did not become ready on ${_redis_wait_host}:${REDIS_PORT}" >&2
     exit 1
   fi
 fi
 
-if is_true "${START_LOCAL_MONGO}"; then
+if [ "${START_LOCAL_MONGO}" = "1" ]; then
   if command -v mongod >/dev/null 2>&1; then
     start_mongo
-    if ! wait_for_tcp 127.0.0.1 27017 120; then
-      echo "[init] ERROR: MongoDB did not become ready on 127.0.0.1:27017" >&2
+
+    # If binding to 0.0.0.0, wait on localhost.
+    _mongo_wait_host="${MONGO_HOST}"
+    if [ "${_mongo_wait_host}" = "0.0.0.0" ]; then
+      _mongo_wait_host="127.0.0.1"
+    fi
+
+    if ! wait_for_tcp "${_mongo_wait_host}" "${MONGO_PORT}" 120; then
+      echo "[init] ERROR: MongoDB did not become ready on ${_mongo_wait_host}:${MONGO_PORT}" >&2
       exit 1
     fi
   else
