@@ -40,6 +40,7 @@ start_redis() {
     --protected-mode yes \
     --dir "${REDIS_DIR}" \
     --appendonly yes \
+    --logfile "${REDIS_DIR}/redis.log" \
     --pidfile "${REDIS_DIR}/redis-server.pid" \
     ${REDIS_EXTRA_ARGS:-} &
 }
