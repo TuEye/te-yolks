@@ -14,6 +14,7 @@ export INTERNAL_IP
 : "${CLI_PORT:=21026}"
 : "${START_LOCAL_REDIS:=0}"
 : "${START_LOCAL_MONGO:=0}"
+: "${WAIT_FOR_CLI_TIMEOUT:=300}"
 
 REDIS_DIR="/home/container/data/redis"
 MONGO_DBPATH="/home/container/data/mongo/db"
@@ -133,7 +134,7 @@ if [ -n "${PRESTART_CMD}" ]; then
   SCREEPS_PID=$!
 
   echo "[init] Waiting for CLI on ${CLI_HOST}:${CLI_PORT} ..."
-  if ! wait_for_tcp "${CLI_HOST}" "${CLI_PORT}" 120; then
+  if ! wait_for_tcp "${CLI_HOST}" "${CLI_PORT}" "${WAIT_FOR_CLI_TIMEOUT}"; then
     echo "[init] ERROR: CLI port not reachable. Killing server process ${SCREEPS_PID}."
     kill "${SCREEPS_PID}" 2>/dev/null || true
     exit 1
