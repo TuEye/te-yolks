@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.6
-FROM --platform=$TARGETOS/$TARGETARCH debian:12-slim
+FROM --platform=$TARGETOS/$TARGETARCH ghcr.io/pelican-eggs/installers:debian
 
 LABEL author="TuEye"
 

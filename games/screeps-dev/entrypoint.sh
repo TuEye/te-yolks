@@ -24,9 +24,9 @@ export PATH="${PYENV_ROOT}/bin:${PYENV_ROOT}/shims:${PATH}"
 : "${START_SCREEPS_LAUNCHER_BACKGROUND:=0}"
 
 # Allow host/port override from outside
-: "${REDIS_HOST:=127.0.0.1}"
+REDIS_HOST="127.0.0.1"
 : "${REDIS_PORT:=6379}"
-: "${MONGO_HOST:=127.0.0.1}"
+MONGO_HOST="127.0.0.1"
 : "${MONGO_PORT:=27017}"
 
 # Cleanup flags (default true)
@@ -138,15 +138,8 @@ ensure_python2() {
 
 if [ "${START_LOCAL_REDIS}" = "1" ]; then
   start_redis
-
-  # If binding to 0.0.0.0, wait on localhost.
-  _redis_wait_host="${REDIS_HOST}"
-  if [ "${_redis_wait_host}" = "0.0.0.0" ]; then
-    _redis_wait_host="127.0.0.1"
-  fi
-
-  if ! wait_for_tcp "${_redis_wait_host}" "${REDIS_PORT}" 60; then
-    echo "[init] ERROR: Redis did not become ready on ${_redis_wait_host}:${REDIS_PORT}" >&2
+  if ! wait_for_tcp "${REDIS_HOST}" "${REDIS_PORT}" 60; then
+    echo "[init] ERROR: Redis did not become ready on ${REDIS_HOST}:${REDIS_PORT}" >&2
     exit 1
   fi
 fi
@@ -154,15 +147,8 @@ fi
 if [ "${START_LOCAL_MONGO}" = "1" ]; then
   if command -v mongod >/dev/null 2>&1; then
     start_mongo
-
-    # If binding to 0.0.0.0, wait on localhost.
-    _mongo_wait_host="${MONGO_HOST}"
-    if [ "${_mongo_wait_host}" = "0.0.0.0" ]; then
-      _mongo_wait_host="127.0.0.1"
-    fi
-
-    if ! wait_for_tcp "${_mongo_wait_host}" "${MONGO_PORT}" 120; then
-      echo "[init] ERROR: MongoDB did not become ready on ${_mongo_wait_host}:${MONGO_PORT}" >&2
+    if ! wait_for_tcp "${MONGO_HOST}" "${MONGO_PORT}" 120; then
+      echo "[init] ERROR: MongoDB did not become ready on ${MONGO_HOST}:${MONGO_PORT}" >&2
       exit 1
     fi
   else
