@@ -6,15 +6,16 @@ LABEL author="TuEye"
 ARG TARGETOS
 ARG TARGETARCH
 ARG MONGO_DEBIAN_CODENAME=bookworm
-ARG NODE_DEBIAN_CODENAME=bookworm
 
 ENV DEBIAN_FRONTEND=noninteractive \
-    NPM_VERSION=8 \
+    NVM_DIR=/opt/nvm \
+    NODE_VERSION=12 \
     PYENV_ROOT=/opt/pyenv \
     PYTHON2_VERSION=2.7.18
 
 # Make pyenv available for all users by default (no pyenv init needed).
-ENV PATH="${PYENV_ROOT}/bin:${PYENV_ROOT}/shims:${PATH}"
+# Keep pyenv and nvm-based Node available for all users by default.
+ENV PATH="${PYENV_ROOT}/bin:${PYENV_ROOT}/shims:${NVM_DIR}/current/bin:${PATH}"
 
 ## add container user
 USER root
@@ -108,18 +109,19 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
       echo "[build] Skipping mongodb-org install for TARGETARCH=${TARGETARCH}"; \
     fi
 
-# Node.js Install
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
-    set -eux; \
-    curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
-      | gpg -o /usr/share/keyrings/nodesource.gpg --dearmor; \
-    echo "deb [signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_12.x ${NODE_DEBIAN_CODENAME} main" \
-      > /etc/apt/sources.list.d/nodejs.list; \
-    printf '%s\n' 'Package: *' 'Pin: origin deb.nodesource.com' 'Pin-Priority: 1001' > /etc/apt/preferences.d/nodesource; \
-    apt-get update; \
-    apt-get install -y --no-install-recommends nodejs; \
-    npm -g install "npm@${NPM_VERSION}"
+# Node.js 12 via nvm (system-wide)
+RUN set -eux; \
+    mkdir -p "${NVM_DIR}"; \
+    curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash; \
+    . "${NVM_DIR}/nvm.sh"; \
+    nvm install "${NODE_VERSION}"; \
+    nvm alias default "${NODE_VERSION}"; \
+    nvm use --default; \
+    node -v; \
+    nvm install-latest-npm; \
+    node_ver="$(nvm version "${NODE_VERSION}")"; \
+    ln -sfn "${NVM_DIR}/versions/node/${node_ver}" "${NVM_DIR}/current"; \
+    chmod -R a+rX "${NVM_DIR}"
 
 USER container
 ENV USER=container HOME=/home/container

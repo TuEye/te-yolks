@@ -10,7 +10,15 @@ export INTERNAL_IP
 # Ensure pyenv/python PATH is available even if a runtime orchestrator overrides PATH.
 # Also avoids relying on login-shell behavior that may rewrite PATH.
 export PYENV_ROOT="${PYENV_ROOT:-/opt/pyenv}"
-export PATH="${PYENV_ROOT}/bin:${PYENV_ROOT}/shims:${PATH}"
+export NVM_DIR="${NVM_DIR:-/opt/nvm}"
+export PATH="${PYENV_ROOT}/bin:${PYENV_ROOT}/shims:${NVM_DIR}/current/bin:${PATH}"
+
+# Ensure nvm-managed Node.js is available for all users (non-login shells included).
+if [ -s "${NVM_DIR}/nvm.sh" ]; then
+  # shellcheck disable=SC1091
+  . "${NVM_DIR}/nvm.sh"
+  nvm use --silent default >/dev/null 2>&1 || true
+fi
 
 # ---- Variables and Defaults ----
 : "${SCREEPS_SERVER_CMD:=npx screeps start}"
