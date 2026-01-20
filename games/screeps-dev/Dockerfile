@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.6
-FROM --platform=$TARGETOS/$TARGETARCH ghcr.io/pelican-eggs/installers:debian
+FROM --platform=$TARGETOS/$TARGETARCH ghcr.io/pelican-eggs/yolks:debian
 
 LABEL author="TuEye"
 
@@ -113,14 +113,14 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 RUN set -eux; \
     mkdir -p "${NVM_DIR}"; \
     curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash; \
-    . "${NVM_DIR}/nvm.sh"; \
-    nvm install "${NODE_VERSION}"; \
-    nvm alias default "${NODE_VERSION}"; \
-    nvm use --default; \
-    node -v; \
-    nvm install-latest-npm; \
-    node_ver="$(nvm version "${NODE_VERSION}")"; \
-    ln -sfn "${NVM_DIR}/versions/node/${node_ver}" "${NVM_DIR}/current"; \
+    /bin/bash -lc ". \"${NVM_DIR}/nvm.sh\"; \
+      nvm install \"${NODE_VERSION}\"; \
+      nvm alias default \"${NODE_VERSION}\"; \
+      nvm use --default; \
+      node -v; \
+      nvm install-latest-npm; \
+      node_ver=\"\$(nvm version \"${NODE_VERSION}\")\"; \
+      ln -sfn \"${NVM_DIR}/versions/node/\${node_ver}\" \"${NVM_DIR}/current\""; \
     chmod -R a+rX "${NVM_DIR}"
 
 USER container
