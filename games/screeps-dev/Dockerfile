@@ -6,6 +6,7 @@ LABEL author="TuEye"
 ARG TARGETOS
 ARG TARGETARCH
 ARG MONGO_DEBIAN_CODENAME=bookworm
+ARG NODE_DEBIAN_CODENAME=bookworm
 
 ENV DEBIAN_FRONTEND=noninteractive \
     NPM_VERSION=8 \
@@ -113,7 +114,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     set -eux; \
     curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
       | gpg -o /usr/share/keyrings/nodesource.gpg --dearmor; \
-    echo "deb [signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_12.x nodistro main" \
+    echo "deb [signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_12.x ${NODE_DEBIAN_CODENAME} main" \
       > /etc/apt/sources.list.d/nodejs.list; \
     printf '%s\n' 'Package: *' 'Pin: origin deb.nodesource.com' 'Pin-Priority: 1001' > /etc/apt/preferences.d/nodesource; \
     apt-get update; \
