@@ -19,7 +19,10 @@ ENV PATH="${PYENV_ROOT}/bin:${PYENV_ROOT}/shims:${NVM_DIR}/current/bin:${PATH}"
 
 ## add container user
 USER root
-RUN useradd -m -d /home/container -s /bin/bash container
+RUN set -eux; \
+    if ! id -u container >/dev/null 2>&1; then \
+      useradd -m -d /home/container -s /bin/bash container; \
+    fi
 
 # Base packages (+ build deps for pyenv / python2 from source)
 # Note: BuildKit cache mounts accelerate apt significantly without polluting final layers.
