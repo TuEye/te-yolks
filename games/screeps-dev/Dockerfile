@@ -5,6 +5,7 @@ LABEL author="TuEye"
 
 ARG TARGETOS
 ARG TARGETARCH
+ARG MONGO_DEBIAN_CODENAME=bookworm
 
 ENV DEBIAN_FRONTEND=noninteractive \
     NPM_VERSION=8 \
@@ -98,7 +99,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     if [ "${TARGETARCH}" = "amd64" ]; then \
       curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc \
         | gpg -o /usr/share/keyrings/mongodb-server.gpg --dearmor; \
-      echo "deb [ signed-by=/usr/share/keyrings/mongodb-server.gpg ] https://repo.mongodb.org/apt/debian bookworm/mongodb-org/7.0 main" \
+      echo "deb [ signed-by=/usr/share/keyrings/mongodb-server.gpg ] https://repo.mongodb.org/apt/debian ${MONGO_DEBIAN_CODENAME}/mongodb-org/7.0 main" \
         > /etc/apt/sources.list.d/mongodb-org.list; \
       apt-get update; \
       apt-get install -y --no-install-recommends mongodb-org; \
@@ -110,9 +111,9 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
     set -eux; \
-    curl -fsSL https://deb.nodesource.com/gpgkey/nodesource.gpg.key \
+    curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
       | gpg -o /usr/share/keyrings/nodesource.gpg --dearmor; \
-    echo "deb [signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_12.x bookworm main" \
+    echo "deb [signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_12.x nodistro main" \
       > /etc/apt/sources.list.d/nodejs.list; \
     printf '%s\n' 'Package: *' 'Pin: origin deb.nodesource.com' 'Pin-Priority: 1001' > /etc/apt/preferences.d/nodesource; \
     apt-get update; \
